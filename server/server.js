@@ -21,17 +21,28 @@ io.on('connection', (socket) => {
 
   socket.on('join', (roomId) => {
     socket.join(roomId);
+    // Store roomId on socket for later use
+    socket.roomId = roomId;
     const clients = io.sockets.adapter.rooms.get(roomId) || new Set();
-    console.log(`Room ${roomId} now has ${clients.size} client(s)`);
+    console.log(`[JOIN] ${socket.id} joined room ${roomId} (${clients.size} client(s))`);
+    // Notify other peers in the room
     socket.to(roomId).emit('peer-joined', socket.id);
   });
 
+  // CRITICAL: Relay signaling messages (SDP offers/answers, ICE candidates) between peers
   socket.on('signal', ({ roomId, data }) => {
+    console.log(`[SIGNAL] from ${socket.id} to room ${roomId}`, data.sdp ? 'SDP' : 'ICE');
     socket.to(roomId).emit('signal', { from: socket.id, data });
   });
 
+  socket.on('leave', (roomId) => {
+    socket.leave(roomId);
+    socket.to(roomId).emit('peer-left', socket.id);
+    console.log(`[LEAVE] ${socket.id} left room ${roomId}`);
+  });
+
   socket.on('disconnect', (reason) => {
-    console.log(`Client ${socket.id} disconnected: ${reason}`);
+    console.log(`[DISCONNECT] ${socket.id}: ${reason}`);
     socket.rooms.forEach((roomId) => {
       if (roomId !== socket.id) {
         socket.to(roomId).emit('peer-left', socket.id);
