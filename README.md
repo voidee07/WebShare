@@ -114,7 +114,7 @@ sequenceDiagram
     Sender->>Receiver: send transfer-complete
     Note over Receiver: Reassembles chunks into single Blob
     Note over Receiver: Automatically triggers browser file download
-
+```
 ## 📁 Repository Folder Structure
 
 ```
