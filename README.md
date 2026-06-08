@@ -285,27 +285,6 @@ Use this step-by-step script to record a compelling demo video:
 - Navigate to the deployed Vercel URL in both windows
 - Prepare a test file (PDF, image, or any file under 50 MB)
 
-### Recording Sequence
-
-| Timestamp | Action | What the viewer sees |
-| :--- | :--- | :--- |
-| **0:00** | Show the landing page | Glassmorphism UI with "WebShare" branding, feature badges |
-| **0:05** | Click **Create Room** | Sender screen appears with room code + invite link |
-| **0:10** | Click the **copy invite link** button | "Invite link copied!" toast appears |
-| **0:12** | Paste the link in Browser B | Receiver auto-joins, status shows "Connected" on both |
-| **0:18** | Drag a file into the upload zone (Browser A) | File card appears with name and size |
-| **0:22** | Click **Send File** | Progress bar animates on both screens, speed shows MB/s |
-| **0:30** | Transfer completes | "File sent successfully!" on sender, auto-download on receiver |
-| **0:35** | Show the downloaded file | Open the file to prove integrity |
-| **0:40** | Click **Reset** on both | Back to landing page — clean disconnect |
-
-### Key Points to Highlight in Voiceover
-1. **"Files never touch any server"** — the transfer is direct browser-to-browser
-2. **"Every chunk is SHA-256 verified"** — zero corruption guaranteed
-3. **"Works across networks"** — any two devices with internet access
-4. **"No signup, no login, no installation"** — just share a link
-
----
 
 ## 📄 License
 
