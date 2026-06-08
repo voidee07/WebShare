@@ -94,26 +94,26 @@ sequenceDiagram
     actor Receiver
 
     Note over Sender: File is read as chunks (16KB)
-    Sender->>Receiver: send("file-meta" - name, size, totalChunks)
+    Sender->>Receiver: send "file-meta" - name, size, totalChunks
     Note over Receiver: Allocates buffer array for incoming chunks
-    
+
     loop For each chunk (offset to EOF)
         Note over Sender: Compute SHA-256 of 16KB chunk
         Note over Sender: Pack: [Index (4B)] [Hash (32B)] [Data (16KB)]
         Sender->>Receiver: Stream Binary Data Array
         Note over Receiver: Unpack index and sent SHA-256
         Note over Receiver: Compute SHA-256 of received Data
+        
         alt Hash Matches
             Note over Receiver: Write chunk to buffer; update speed & progress
-        else Hash Mismatch (Corrupted)
+        else Hash Mismatch - Corrupted
             Note over Receiver: Trigger Error, Halt transfer
         end
     end
-    
-    Sender->>Receiver: send("transfer-complete")
+
+    Sender->>Receiver: send "transfer-complete"
     Note over Receiver: Reassembles chunks into single Blob
     Note over Receiver: Automatically triggers browser file download
-```
 
 ---
 
@@ -185,7 +185,7 @@ npm run dev
 
 ---
 
-## 🚀 Hosting & Deployment
+## Hosting & Deployment
 
 The app is split into two separately deployed services:
 
@@ -275,17 +275,6 @@ The app is split into two separately deployed services:
 > ⚠️ **Render free tier note:** The server spins down after 15 minutes of inactivity. The first connection after idle may take ~30 seconds to cold-start. Subsequent connections are instant.
 
 ---
-
-## 🎬 Demo Video Recording Script
-
-Use this step-by-step script to record a compelling demo video:
-
-### Setup
-- Open two browser windows side by side (e.g., Chrome + Firefox, or Chrome + Incognito)
-- Navigate to the deployed Vercel URL in both windows
-- Prepare a test file (PDF, image, or any file under 50 MB)
-
-
 ## 📄 License
 
 MIT License — feel free to use, modify, and distribute.
