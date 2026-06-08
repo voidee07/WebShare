@@ -3,13 +3,32 @@ import { io } from 'socket.io-client';
 
 const CHUNK_SIZE = 16 * 1024; // 16KB chunks
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
-const STUN_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+];
 const generateRoomId = () => Math.random().toString(36).substr(2, 9);
 
 // Determine the signaling server URL based on environment
 const getServerUrl = () => {
   if (import.meta.env.VITE_SERVER_URL) return import.meta.env.VITE_SERVER_URL;
-  if (import.meta.env.PROD) return window.location.origin;
+  if (import.meta.env.PROD) return 'https://webshare-signaling.onrender.com';
   return 'http://localhost:3001';
 };
 
@@ -132,7 +151,7 @@ export default function useWebRTC() {
 
   // ─── Peer Connection ───
   const initPeer = useCallback((creator) => {
-    const pc = new RTCPeerConnection({ iceServers: STUN_SERVERS });
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     pcRef.current = pc;
 
     pc.onicecandidate = (event) => {
@@ -214,12 +233,20 @@ export default function useWebRTC() {
   // ─── Socket.io ───
   useEffect(() => {
     const socket = io(getServerUrl(), {
-      transports: ['websocket'],
-      upgrade: false,
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 20000,
     });
     socketRef.current = socket;
 
     socket.on('connect', () => console.log('[SOCKET] Connected:', socket.id));
+    socket.on('connect_error', (err) => {
+      console.error('[SOCKET] Connection error:', err.message);
+      setError(`Server connection failed: ${err.message}. The server may be waking up — please retry in a few seconds.`);
+    });
 
     socket.on('peer-joined', (peerId) => {
       console.log('[SOCKET] Peer joined:', peerId);
