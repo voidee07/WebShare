@@ -1,0 +1,15 @@
+{
+  "name": "p2p-file-transfer-server",
+  "version": "1.0.0",
+  "description": "Signaling server for WebRTC P2P file transfer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  }
+}
