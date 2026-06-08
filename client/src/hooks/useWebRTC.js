@@ -40,6 +40,7 @@ export default function useWebRTC() {
   const expectedChunksRef = useRef(0);
   const pendingStartRef = useRef(false);
   const receivedBytesRef = useRef(0);
+  const doStartFileTransferRef = useRef(null);
 
   useEffect(() => { roomIdRef.current = roomId; }, [roomId]);
   useEffect(() => { isCreatorRef.current = isCreator; }, [isCreator]);
@@ -55,7 +56,7 @@ export default function useWebRTC() {
       setPeerConnected(true);
       if (pendingStartRef.current && isCreatorRef.current && fileRef.current) {
         pendingStartRef.current = false;
-        doStartFileTransfer();
+        doStartFileTransferRef.current();
       }
     };
 
@@ -212,7 +213,10 @@ export default function useWebRTC() {
 
   // ─── Socket.io ───
   useEffect(() => {
-    const socket = io(getServerUrl());
+    const socket = io(getServerUrl(), {
+      transports: ['websocket'],
+      upgrade: false,
+    });
     socketRef.current = socket;
 
     socket.on('connect', () => console.log('[SOCKET] Connected:', socket.id));
@@ -263,7 +267,7 @@ export default function useWebRTC() {
       socket.emit('join', room.trim());
       setStatus('waiting');
       initPeer(false);
-      
+
       // Clean up URL parameters
       const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: newUrl }, '', newUrl);
@@ -394,6 +398,7 @@ export default function useWebRTC() {
     reader.onerror = () => setError('Error reading file');
     reader.readAsArrayBuffer(f.slice(0, CHUNK_SIZE));
   };
+  doStartFileTransferRef.current = doStartFileTransfer;
 
   return {
     roomId, isCreator, file, status, progress, speed,
