@@ -94,7 +94,7 @@ sequenceDiagram
     actor Receiver
 
     Note over Sender: File is read as chunks (16KB)
-    Sender->>Receiver: send "file-meta" - name, size, totalChunks
+    Sender->>Receiver: send file-meta (name, size, totalChunks)
     Note over Receiver: Allocates buffer array for incoming chunks
 
     loop For each chunk (offset to EOF)
@@ -106,15 +106,14 @@ sequenceDiagram
         
         alt Hash Matches
             Note over Receiver: Write chunk to buffer; update speed & progress
-        else Hash Mismatch - Corrupted
+        else Hash Mismatch / Corrupted
             Note over Receiver: Trigger Error, Halt transfer
         end
     end
 
-    Sender->>Receiver: send "transfer-complete"
+    Sender->>Receiver: send transfer-complete
     Note over Receiver: Reassembles chunks into single Blob
     Note over Receiver: Automatically triggers browser file download
-
 ---
 
 ## 📁 Repository Folder Structure
