@@ -882,3 +882,16 @@ html, body, #root {
     gap: 3px;
   }
 }
+
+.room-code-bar.vertical {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.room-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}

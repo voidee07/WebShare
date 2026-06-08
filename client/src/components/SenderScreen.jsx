@@ -27,6 +27,7 @@ export default function SenderScreen({
   const fileInputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = () => setIsDragging(false);
@@ -42,6 +43,13 @@ export default function SenderScreen({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     if (onCopyCode) onCopyCode();
+  };
+
+  const handleCopyLink = () => {
+    const inviteUrl = `${window.location.origin}/?room=${roomId}`;
+    navigator.clipboard.writeText(inviteUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   const statusText = () => {
@@ -88,24 +96,49 @@ export default function SenderScreen({
         </div>
 
         {/* Room code */}
-        <div className="room-code-bar">
-          <span className="room-label">Room Code</span>
-          <div className="room-code-group">
-            <code className="room-code">{roomId}</code>
-            <button className="btn btn-icon-sm" onClick={handleCopy} title="Copy room code">
-              {copied ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-              )}
-            </button>
+        <div className="room-code-bar vertical">
+          <div className="room-info-row">
+            <span className="room-label">Room Code</span>
+            <div className="room-code-group">
+              <code className="room-code">{roomId}</code>
+              <button className="btn btn-icon-sm" onClick={handleCopy} title="Copy room code">
+                {copied ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
-          {copied && <span className="copied-toast">Copied!</span>}
+
+          <div className="room-info-row">
+            <span className="room-label">Invite Link</span>
+            <div className="room-code-group">
+              <code className="room-code" style={{ fontSize: '12px', letterSpacing: '0.5px' }}>
+                {window.location.host}/?room={roomId}
+              </code>
+              <button className="btn btn-icon-sm" onClick={handleCopyLink} title="Copy invite link">
+                {copiedLink ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {copied && <span className="copied-toast">Room code copied!</span>}
+          {copiedLink && <span className="copied-toast">Invite link copied!</span>}
         </div>
 
         {/* Connection indicator */}

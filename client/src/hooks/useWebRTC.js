@@ -39,6 +39,7 @@ export default function useWebRTC() {
   const receiveBufferRef = useRef([]);
   const expectedChunksRef = useRef(0);
   const pendingStartRef = useRef(false);
+  const receivedBytesRef = useRef(0);
 
   useEffect(() => { roomIdRef.current = roomId; }, [roomId]);
   useEffect(() => { isCreatorRef.current = isCreator; }, [isCreator]);
@@ -86,8 +87,25 @@ export default function useWebRTC() {
       setPeerConnected(false);
     });
 
+    // Check for room invite link on mount
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get('room');
+    if (room) {
+      setRoomId(room.trim());
+      roomIdRef.current = room.trim();
+      setIsCreator(false);
+      isCreatorRef.current = false;
+      socket.emit('join', room.trim());
+      setStatus('waiting');
+      initPeer(false);
+      
+      // Clean up URL parameters
+      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: newUrl }, '', newUrl);
+    }
+
     return () => socket.disconnect();
-  }, []);
+  }, [initPeer]);
 
   // ─── Data Channel setup ───
   const setupDataChannel = useCallback((dc) => {
@@ -113,6 +131,10 @@ export default function useWebRTC() {
             receiveBufferRef.current = new Array(parsed.totalChunks);
             setFileName(parsed.name);
             setStatus('receiving');
+            receivedBytesRef.current = 0;
+            startTimeRef.current = Date.now();
+            setProgress(0);
+            setSpeed(0);
           } else if (parsed.type === 'transfer-complete') {
             assembleFile(parsed.name);
           }
@@ -124,12 +146,42 @@ export default function useWebRTC() {
 
       const view = new DataView(msg);
       const index = view.getUint32(0);
+      const sentHash = new Uint8Array(msg, 4, 32);
       const chunk = msg.slice(36);
 
+      // Verify SHA-256 cryptographic hash of received chunk
+      try {
+        const computedHashBuffer = await crypto.subtle.digest('SHA-256', chunk);
+        const computedHash = new Uint8Array(computedHashBuffer);
+        let hashMatch = true;
+        for (let i = 0; i < 32; i++) {
+          if (sentHash[i] !== computedHash[i]) {
+            hashMatch = false;
+            break;
+          }
+        }
+        if (!hashMatch) {
+          console.error(`[DC] ❌ Hash verification failed for chunk ${index}`);
+          setError(`Data corruption detected at chunk ${index}`);
+          return;
+        }
+      } catch (err) {
+        console.error('[DC] Hash computation error:', err);
+        setError('Verification failed during transfer');
+        return;
+      }
+
       receiveBufferRef.current[index] = chunk;
+      receivedBytesRef.current += chunk.byteLength;
+
       const totalReceived = receiveBufferRef.current.filter(Boolean).length;
       const total = expectedChunksRef.current;
       setProgress(total > 0 ? Math.round((totalReceived / total) * 100) : 0);
+
+      const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      if (elapsed > 0) {
+        setSpeed((receivedBytesRef.current / 1024 / 1024 / elapsed).toFixed(2));
+      }
     };
 
     dc.onerror = (err) => {
@@ -205,6 +257,19 @@ export default function useWebRTC() {
     setStatus('complete');
     setFileName(name);
     console.log('[FILE] ✅ Assembled');
+
+    // Automatically trigger local file download when completed
+    try {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name || 'download';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      console.log('[FILE] ✅ Auto-download triggered');
+    } catch (err) {
+      console.error('[FILE] Auto-download failed:', err);
+    }
   };
 
   // ─── Room Actions ───
@@ -244,6 +309,7 @@ export default function useWebRTC() {
     pendingStartRef.current = false;
     receiveBufferRef.current = [];
     expectedChunksRef.current = 0;
+    receivedBytesRef.current = 0;
   };
 
   // ─── File ───
