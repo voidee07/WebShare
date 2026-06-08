@@ -105,8 +105,12 @@ sequenceDiagram
         Note over Receiver: Compute SHA-256 of received Data
         
         alt Hash Matches
+<<<<<<< HEAD
             Note over Receiver: Write chunk to buffer
             Note over Receiver: Update speed & progress
+=======
+            Note over Receiver: Write chunk to buffer;<br/>update speed & progress
+>>>>>>> 399027885ae1ef76ef58616bb05166f1446254a3
         else Hash Mismatch / Corrupted
             Note over Receiver: Trigger Error, Halt transfer
         end
@@ -116,9 +120,12 @@ sequenceDiagram
     Note over Receiver: Reassembles chunks into single Blob
     Note over Receiver: Automatically triggers browser file download
 ```
+<<<<<<< HEAD
 
 ---
 
+=======
+>>>>>>> 399027885ae1ef76ef58616bb05166f1446254a3
 ## 📁 Repository Folder Structure
 
 ```
