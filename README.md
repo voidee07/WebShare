@@ -121,6 +121,8 @@ sequenceDiagram
 
 ```
 WebShare/
+├── README.md                   # This file — project documentation
+├── render.yaml                 # Render IaC blueprint for one-click server deploy
 ├── client/                     # Frontend App (React + Vite)
 │   ├── public/                 # Static public assets
 │   ├── src/
@@ -130,13 +132,13 @@ WebShare/
 │   │   │   ├── SenderScreen.jsx     # Sender interface (Drag/drop files, invite links)
 │   │   │   └── ReceiverScreen.jsx   # Receiver interface (Real-time speed, auto-download)
 │   │   ├── hooks/
-│   │   │   └── useWebRTC.js    # Custom React Hook containing WebRTC & signaling logic
+│   │   │   └── useWebRTC.js    # Custom React Hook — WebRTC, signaling, SHA-256 verification
 │   │   ├── App.css             # Component-level styling overrides
 │   │   ├── App.jsx             # Main routing & layout controller
 │   │   ├── index.css           # Premium glassmorphism design tokens & styles
 │   │   └── main.jsx            # React root mount point
 │   ├── package.json            # Vite frontend dependencies & build scripts
-│   └── vercel.json             # Vercel redirection rules for SPA router
+│   └── vercel.json             # Vercel SPA rewrite rules
 └── server/                     # Signaling Server (Node.js + Socket.io)
     ├── server.js               # Main server logic & CORS configurations
     └── package.json            # Server-side scripts and dependencies
@@ -151,7 +153,13 @@ To compile and launch WebShare locally:
 ### 1. Pre-requisites
 Make sure you have [Node.js](https://nodejs.org/) installed (v16+ recommended).
 
-### 2. Spin up the Signaling Backend
+### 2. Clone the Repository
+```bash
+git clone https://github.com/voidee07/WebShare.git
+cd WebShare
+```
+
+### 3. Spin up the Signaling Backend
 ```bash
 cd server
 npm install
@@ -159,7 +167,7 @@ npm start
 ```
 *The server will start listening on port `3001`.*
 
-### 3. Spin up the Vite Frontend
+### 4. Spin up the Vite Frontend
 In a new terminal window:
 ```bash
 cd client
@@ -168,34 +176,138 @@ npm run dev
 ```
 *Open `http://localhost:5173` to view the app.*
 
+### 5. Test Locally
+1. Open **Tab 1** → `http://localhost:5173` → Click **Create Room**
+2. Copy the Room Code
+3. Open **Tab 2** → `http://localhost:5173` → Paste the code → Click **Join**
+4. In Tab 1, drag & drop a file → Click **Send File**
+5. Watch the progress in both tabs — the file auto-downloads on the receiver
+
 ---
 
-## 🚀 Hosting & Deployment Guide
+## 🚀 Hosting & Deployment
 
-### Backend: Hosting on Render
-1. Sign up on [Render](https://render.com/).
-2. Click **New +** and select **Web Service**.
-3. Connect your Git repository.
-4. Set the following parameters:
-   * **Name**: `webshare-signaling`
-   * **Runtime**: `Node`
-   * **Build Command**: `npm install` (in the `server` directory)
-   * **Start Command**: `node server.js`
-5. Under **Advanced Options**, add the environment variable:
-   * `PORT` = `10000` (or leave blank; Render binds automatically)
-6. Deploy the web service and copy the public URL (e.g., `https://webshare-signaling.onrender.com`).
+The app is split into two separately deployed services:
 
-### Frontend: Hosting on Vercel
-1. Sign up on [Vercel](https://vercel.com/).
-2. Click **Add New Project** and select your repository.
-3. In the project build configurations:
-   * **Framework Preset**: `Vite`
-   * **Root Directory**: `client`
-   * **Build Command**: `npm run build`
-   * **Output Directory**: `dist`
-4. Add the Environment Variable under **Environment Variables**:
-   * **Key**: `VITE_SERVER_URL`
-   * **Value**: *Your Render backend URL (e.g., `https://webshare-signaling.onrender.com`)*
-5. Click **Deploy**. Vercel will output a unique direct hosting link (e.g., `https://webshare-client.vercel.app`).
+| Service | Platform | What it does |
+| :--- | :--- | :--- |
+| **Signaling Server** | [Render](https://render.com) | Relays SDP/ICE messages so peers can find each other |
+| **Frontend Client** | [Vercel](https://vercel.com) | Serves the React UI; all file data stays peer-to-peer |
 
-*Now, when the sender shares the direct link, receivers can join automatically by opening the URL on any internet connection.*
+### Step 1 — Deploy the Signaling Server on Render
+
+> ⚠️ **Deploy the server FIRST** — the frontend needs the server URL as an environment variable.
+
+1. **Go to** [render.com](https://render.com) and sign in (or create an account).
+
+2. **Click** `New +` → `Web Service`.
+
+3. **Connect your GitHub repository** (`voidee07/WebShare`).
+
+4. **Configure the service** with these exact settings:
+
+   | Setting | Value |
+   | :--- | :--- |
+   | **Name** | `webshare-signaling` |
+   | **Region** | Oregon (US West) or closest to you |
+   | **Branch** | `main` |
+   | **Root Directory** | `server` |
+   | **Runtime** | `Node` |
+   | **Build Command** | `npm install` |
+   | **Start Command** | `node server.js` |
+   | **Instance Type** | `Free` |
+
+5. **Click** `Create Web Service`.
+
+6. **Wait for the deploy** to finish (1–2 minutes). Render will show a green "Live" badge.
+
+7. **Copy the public URL** from the dashboard — it will look like:
+   ```
+   https://webshare-signaling.onrender.com
+   ```
+   > 💡 You'll need this URL in the next step.
+
+---
+
+### Step 2 — Deploy the Frontend on Vercel
+
+1. **Go to** [vercel.com](https://vercel.com) and sign in (or create an account).
+
+2. **Click** `Add New...` → `Project`.
+
+3. **Import your GitHub repository** (`voidee07/WebShare`).
+
+4. **Configure the project** with these settings:
+
+   | Setting | Value |
+   | :--- | :--- |
+   | **Framework Preset** | `Vite` |
+   | **Root Directory** | `client` ← click "Edit" to change this |
+   | **Build Command** | `npm run build` |
+   | **Output Directory** | `dist` |
+
+5. **Expand** `Environment Variables` and add:
+
+   | Key | Value |
+   | :--- | :--- |
+   | `VITE_SERVER_URL` | `https://webshare-signaling.onrender.com` ← your Render URL from Step 1 |
+
+6. **Click** `Deploy`.
+
+7. **Wait** for the build to complete (~30 seconds). Vercel will give you a live URL like:
+   ```
+   https://webshare-xxxxx.vercel.app
+   ```
+
+---
+
+### Step 3 — Verify the Deployment
+
+1. Open your **Vercel URL** in Browser A (e.g. Chrome).
+2. Click **Create Room** → a room code and invite link appear.
+3. Copy the **invite link**.
+4. Open it in Browser B (e.g. Firefox, or Chrome Incognito).
+5. The receiver auto-joins the room.
+6. Back in Browser A, select a file and click **Send File**.
+7. Watch the real-time progress on both screens.
+8. The file auto-downloads on the receiver when complete. ✅
+
+> ⚠️ **Render free tier note:** The server spins down after 15 minutes of inactivity. The first connection after idle may take ~30 seconds to cold-start. Subsequent connections are instant.
+
+---
+
+## 🎬 Demo Video Recording Script
+
+Use this step-by-step script to record a compelling demo video:
+
+### Setup
+- Open two browser windows side by side (e.g., Chrome + Firefox, or Chrome + Incognito)
+- Navigate to the deployed Vercel URL in both windows
+- Prepare a test file (PDF, image, or any file under 50 MB)
+
+### Recording Sequence
+
+| Timestamp | Action | What the viewer sees |
+| :--- | :--- | :--- |
+| **0:00** | Show the landing page | Glassmorphism UI with "WebShare" branding, feature badges |
+| **0:05** | Click **Create Room** | Sender screen appears with room code + invite link |
+| **0:10** | Click the **copy invite link** button | "Invite link copied!" toast appears |
+| **0:12** | Paste the link in Browser B | Receiver auto-joins, status shows "Connected" on both |
+| **0:18** | Drag a file into the upload zone (Browser A) | File card appears with name and size |
+| **0:22** | Click **Send File** | Progress bar animates on both screens, speed shows MB/s |
+| **0:30** | Transfer completes | "File sent successfully!" on sender, auto-download on receiver |
+| **0:35** | Show the downloaded file | Open the file to prove integrity |
+| **0:40** | Click **Reset** on both | Back to landing page — clean disconnect |
+
+### Key Points to Highlight in Voiceover
+1. **"Files never touch any server"** — the transfer is direct browser-to-browser
+2. **"Every chunk is SHA-256 verified"** — zero corruption guaranteed
+3. **"Works across networks"** — any two devices with internet access
+4. **"No signup, no login, no installation"** — just share a link
+
+---
+
+## 📄 License
+
+MIT License — feel free to use, modify, and distribute.
+

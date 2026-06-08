@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: webshare-signaling
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production

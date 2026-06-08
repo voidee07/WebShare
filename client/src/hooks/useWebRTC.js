@@ -45,68 +45,6 @@ export default function useWebRTC() {
   useEffect(() => { isCreatorRef.current = isCreator; }, [isCreator]);
   useEffect(() => { fileRef.current = file; }, [file]);
 
-  // ─── Socket.io ───
-  useEffect(() => {
-    const socket = io(getServerUrl());
-    socketRef.current = socket;
-
-    socket.on('connect', () => console.log('[SOCKET] Connected:', socket.id));
-
-    socket.on('peer-joined', (peerId) => {
-      console.log('[SOCKET] Peer joined:', peerId);
-      setPeerConnected(true);
-      if (isCreatorRef.current) {
-        console.log('[SIGNAL] Creating offer...');
-        createOffer();
-      }
-    });
-
-    socket.on('signal', async ({ from, data }) => {
-      console.log('[SIGNAL] Received', data.sdp ? `SDP(${data.sdp.type})` : 'ICE');
-      const pc = pcRef.current;
-      if (!pc) return;
-
-      try {
-        if (data.sdp) {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          if (data.sdp.type === 'offer') {
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socket.emit('signal', { roomId: roomIdRef.current, data: { sdp: pc.localDescription } });
-          }
-        } else if (data.candidate) {
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        }
-      } catch (err) {
-        console.error('[SIGNAL] Error:', err);
-      }
-    });
-
-    socket.on('peer-left', () => {
-      setStatus('peer-disconnected');
-      setPeerConnected(false);
-    });
-
-    // Check for room invite link on mount
-    const params = new URLSearchParams(window.location.search);
-    const room = params.get('room');
-    if (room) {
-      setRoomId(room.trim());
-      roomIdRef.current = room.trim();
-      setIsCreator(false);
-      isCreatorRef.current = false;
-      socket.emit('join', room.trim());
-      setStatus('waiting');
-      initPeer(false);
-      
-      // Clean up URL parameters
-      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-      window.history.replaceState({ path: newUrl }, '', newUrl);
-    }
-
-    return () => socket.disconnect();
-  }, [initPeer]);
-
   // ─── Data Channel setup ───
   const setupDataChannel = useCallback((dc) => {
     dc.binaryType = 'arraybuffer';
@@ -271,6 +209,68 @@ export default function useWebRTC() {
       console.error('[FILE] Auto-download failed:', err);
     }
   };
+
+  // ─── Socket.io ───
+  useEffect(() => {
+    const socket = io(getServerUrl());
+    socketRef.current = socket;
+
+    socket.on('connect', () => console.log('[SOCKET] Connected:', socket.id));
+
+    socket.on('peer-joined', (peerId) => {
+      console.log('[SOCKET] Peer joined:', peerId);
+      setPeerConnected(true);
+      if (isCreatorRef.current) {
+        console.log('[SIGNAL] Creating offer...');
+        createOffer();
+      }
+    });
+
+    socket.on('signal', async ({ from, data }) => {
+      console.log('[SIGNAL] Received', data.sdp ? `SDP(${data.sdp.type})` : 'ICE');
+      const pc = pcRef.current;
+      if (!pc) return;
+
+      try {
+        if (data.sdp) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          if (data.sdp.type === 'offer') {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit('signal', { roomId: roomIdRef.current, data: { sdp: pc.localDescription } });
+          }
+        } else if (data.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      } catch (err) {
+        console.error('[SIGNAL] Error:', err);
+      }
+    });
+
+    socket.on('peer-left', () => {
+      setStatus('peer-disconnected');
+      setPeerConnected(false);
+    });
+
+    // Check for room invite link on mount
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get('room');
+    if (room) {
+      setRoomId(room.trim());
+      roomIdRef.current = room.trim();
+      setIsCreator(false);
+      isCreatorRef.current = false;
+      socket.emit('join', room.trim());
+      setStatus('waiting');
+      initPeer(false);
+      
+      // Clean up URL parameters
+      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: newUrl }, '', newUrl);
+    }
+
+    return () => socket.disconnect();
+  }, [initPeer]);
 
   // ─── Room Actions ───
   const createRoom = () => {
