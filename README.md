@@ -4,7 +4,7 @@
 
 ---
 
-## 🎬 Project Demo Video
+## 🎬 Project Demo Video link https://drive.google.com/file/d/1erNU3bo4CRMHYWDr8gJ3L640h61vM9x4/view?usp=sharing
 
 ## 🎯 Project Aim & Core Architecture
 
