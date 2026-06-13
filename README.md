@@ -5,26 +5,6 @@
 ---
 
 ## 🎬 Project Demo Video
-<!-- 
-  REPLACE THIS SECTION WITH YOUR ACTUAL DEMO EMBED OR LINK.
-  For example:
-  [![WebShare Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
--->
-```
-+--------------------------------------------------------------------------+
-|                                                                          |
-|                      [ INSERT DEMO VIDEO / GIF HERE ]                    |
-|                                                                          |
-|   Recommended details to record:                                         |
-|   1. Sender dragging a file into the upload zone and generating code     |
-|   2. Receiver opening the invite link and automatically joining          |
-|   3. Files transferring with progress, speed, and SHA-256 checks         |
-|   4. Triggering of auto-download on complete and graceful disconnects    |
-|                                                                          |
-+--------------------------------------------------------------------------+
-```
-
----
 
 ## 🎯 Project Aim & Core Architecture
 
